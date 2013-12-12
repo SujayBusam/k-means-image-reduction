@@ -565,26 +565,121 @@ public class Picture extends SimplePicture {
 	 * @param initColors the initial list of colors to start k-means
 	 * @return the list of colors generated (may be shorter than initColors)
 	 */
-	
+
 	// Returns correct / final arraylist of colors computed using k means
 	public ArrayList<Color> computeColors(int number) {
 
 		// ArrayList containing "numbers" amount of random colors
 		ArrayList<Color> colors = createRandomList(number);
 
+		// Initialize clusters list
+		ArrayList<ArrayList<Color>> clusters = updateClusters(colors, number);
+		ArrayList<Color> oldCentroids = colors;
+		ArrayList<Color> newCentroids = updateCentroids(clusters);
+
+		while (!oldCentroids.equals(newCentroids)) {
+			// Update clusters list
+			clusters = updateClusters(newCentroids, clusters.size());
+
+			// Update lists of centroids
+			oldCentroids = newCentroids;
+			newCentroids = updateCentroids(clusters);
+		}
+
+		return newCentroids;
+	}
+
+
+	/**
+	 * @author Sujay Busam
+	 * Helper method to update 2D clusters array
+	 * @param clusters the 2D clusters array
+	 * @param colors the arraylist of original colors
+	 * @return clusters the updated 2D clusters array
+	 */
+	public ArrayList<ArrayList<Color>> updateClusters(ArrayList<Color> colors, int number) {
+
+		Pixel currPixel = null; // Current pixel in this picture
+		Color currColor = null; // Color of current pixel
+		int targetIndex = 0; // index of Color of corresponding target pixel
+
 		// 2D arraylist to hold colors and corresponding pixel colors
-		ArrayList<ArrayList<Color>> myClusters = new ArrayList<ArrayList<Color>>();
+		ArrayList<ArrayList<Color>> clusters = new ArrayList<ArrayList<Color>>();
 
 		// Add "number" amount of arraylists to the 2D arraylist
 		for (int i = 0; i < number; i++) {
 			ArrayList<Color> newList = new ArrayList<Color>();
-			myClusters.add(newList);
-		}		
-		
-		// Incomplete method
+			clusters.add(newList);
+		}
+
+		// Run through each pixel in this picture
+		for (int srcX = 0; srcX < this.getWidth(); srcX++) {
+			for (int srcY = 0; srcY < this.getHeight(); srcY++) {
+
+				// get the current pixel at current X and Y coordinates
+				currPixel = this.getPixel(srcX,srcY);
+
+				// Current color
+				currColor = currPixel.getColor();
+
+				// Get index of "nearest" Color object in arraylist
+				targetIndex = findClosestColor(currColor, colors);
+
+				// Add color object to corresponding index in clusters
+				clusters.get(targetIndex).add(currColor);
+			}
+		}
+
+		return clusters;
 	}
 
+	/**
+	 * @author Sujay Busam
+	 * Helper method to return an arraylist of updated centroids
+	 * @param clusters
+	 * @return centroids
+	 */
+	public ArrayList<Color> updateCentroids(ArrayList<ArrayList<Color>> clusters) {
+		ArrayList<Color> centroids = new ArrayList<Color>();
 
+		// Run through each cluster
+		for (ArrayList<Color> cluster: clusters) {
+			
+			// If cluster is empty, don't compute centroid
+			if (cluster.size() == 0) {
+				continue;
+			}
+
+			int redSum = 0;
+			int greenSum = 0;
+			int blueSum = 0;
+			int redAvg = 0;
+			int greenAvg = 0;
+			int blueAvg = 0;
+
+			// Run through each color in current cluster
+			for (Color color: cluster) {
+				// Sum the color values
+				redSum += color.getRed();
+				greenSum += color.getGreen();
+				blueSum += color.getBlue();
+			}
+
+			// Compute average color values for each cluster
+			redAvg = (int)(redSum * 1.0 / cluster.size());
+			greenAvg = (int)(greenSum * 1.0 / cluster.size());
+			blueAvg = (int)(blueSum * 1.0 / cluster.size());
+
+			// Create new centroid
+			Color centroid = new Color(redAvg, greenAvg, blueAvg);
+
+			// Add centroid to arraylist
+			centroids.add(centroid);
+
+		}
+
+		return centroids;
+	}
 
 	/** 
 	 * @author Sujay Busam
@@ -593,7 +688,7 @@ public class Picture extends SimplePicture {
 	 * @param number the number of colors to use
 	 * @return the picture rendered in that many colors
 	 */
-	
+
 	// Returns target picture using correct arraylist of colors
 	public Picture reduceColors(int number) {
 		// calls computeColors and passes the result to mapToColorList
@@ -668,26 +763,26 @@ public class Picture extends SimplePicture {
 	 * @param k the number of unique colors
 	 * @return a list of colors
 	 */
-	
+
 	public ArrayList<Color> getKColors(int k){
 
 		// ArrayList that will hold the k colors
 		ArrayList<Color> kList = new ArrayList<Color>();
-		
+
 		Pixel currPixel = null;
 		Color currColor = null;
-		
-		
+
+
 		while (kList.size() < k)	{ 
-			
+
 			// Run through every pixel
 			for (int currX = 0; currX < this.getWidth(); currX++) {
 				for (int currY = 0; currY < this.getHeight(); currY++) {
-					
+
 					// Current pixel and color of that pixel
 					currPixel = this.getPixel(currX, currY);
 					currColor = currPixel.getColor();
-					
+
 					// If color is unique, add it to the list
 					if(!kList.contains(currColor)){
 						kList.add(currColor);
@@ -707,7 +802,7 @@ public class Picture extends SimplePicture {
 		Picture p = 
 			new Picture(FileChooser.pickAFile());
 		p.explore();
-		
+
 		// Each of the three parts have the line(s) containing the explore call commented out
 		// To run any of the parts, uncomment respective lines
 
@@ -720,7 +815,7 @@ public class Picture extends SimplePicture {
 		color.add(Color.yellow);
 		color.add(Color.black);
 		color.add(Color.white);
-//		 p.mapToColorList(color).explore();
+		//		 p.mapToColorList(color).explore();
 
 
 
@@ -742,18 +837,19 @@ public class Picture extends SimplePicture {
 		color2.add(mountain);
 		color2.add(lightGreen);
 		color2.add(darkGreen);
-//		 p.mapToColorList(color2).explore();
+//				 p.mapToColorList(color2).explore();
 
 
-		
-		
+
+
 
 		ArrayList<Color> color3 = createRandomList(8);
 		ArrayList<Color> color4 = createRandomList(256);
 
-//		 p.mapToColorList(color3).explore();
-//		 p.mapToColorList(color4).explore();
+		//		 p.mapToColorList(color3).explore();
+		//		 p.mapToColorList(color4).explore();
 
+		p.reduceColors(8).explore();
 
 
 	}
