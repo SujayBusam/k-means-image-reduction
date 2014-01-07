@@ -849,6 +849,9 @@ public class Picture extends SimplePicture {
 		//		 p.mapToColorList(color3).explore();
 		//		 p.mapToColorList(color4).explore();
 
+
+
+		// Chose number of colors to reduce to by passing in as a parameter 
 		p.reduceColors(8).explore();
 
 
